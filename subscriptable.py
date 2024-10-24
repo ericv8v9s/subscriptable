@@ -3,10 +3,13 @@ import builtins
 
 builtins_map = map
 builtins_zip = zip
+builtins_filter = filter
 
 
 def _fill_items(items, iterable, stop):
-	if stop is None or stop >= len(items):
+	if stop is None or stop < 0:
+		items.extend(list(iterable))
+	elif stop >= len(items):
 		for _, val in builtins_zip(range(stop - len(items) + 1), iterable):
 			items.append(val)
 
@@ -51,6 +54,16 @@ class SubscriptableZip(Subscriptable):
 		super().__init__(builtins_zip(*iterables, strict=strict))
 
 
+class SubscriptableFilter(Subscriptable):
+	@staticmethod
+	def patch():
+		builtins.filter = SubscriptableFilter
+
+	def __init__(self, function, iterable):
+		super().__init__(builtins_filter(function, iterable))
+
+
 def patch_all():
 	builtins.map = SubscriptableMap
 	builtins.zip = SubscriptableZip
+	builtins.filter = SubscriptableFilter
